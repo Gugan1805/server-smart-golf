@@ -1,28 +1,49 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository, getRepositoryToken } from '@nestjs/typeorm';
-import { User } from './user.entity';
+// src/auth/auth.service.ts
+import { Injectable, BadRequestException } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { SupabaseClient } from '../supabase/supabase.provider';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
-export class UsersService {
-  constructor(
-    @Inject(forwardRef(() => getRepositoryToken(User)))
-    private readonly usersRepository: Repository<User>,
-  ) {}
+export class UserService {
+  async register(CreateUserDto: CreateUserDto) {
+    const { name, email, password, role } = CreateUserDto;
 
-  create(createUserDto: { name: string }): string {
-    return `User with name ${createUserDto.name} created!`;
-  }
+    // Check if user already exists
+    const { data: existingUser } = await SupabaseClient
+      .from('users')
+      .select('id')
+      .eq('email', email)
+      .single();
 
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
-  }
+    if (existingUser) {
+      throw new BadRequestException('User already exists');
+    }
 
-  findOne(id: number): Promise<User | null> {
-    return this.usersRepository.findOneBy({ id });
-  }
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  async remove(id: number): Promise<void> {
-    await this.usersRepository.delete(id);
+    // Insert new user
+    const { data, error } = await SupabaseClient
+      .from('users')
+      .insert([
+        {
+          email,
+          password: hashedPassword,
+          name,
+          role
+        },
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      throw new BadRequestException(error.message);
+    }
+
+    return {
+      message: 'User registered successfully',
+      user: data,
+    };
   }
 }

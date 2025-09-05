@@ -5,19 +5,9 @@ import { RoleService } from './role.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'Thiva.123',
-      database: 'smart_golf',
-      entities: [Role],
-      migrations: ['src/migrations/2025-08-10-160500-CreateUsersTable.js'],
-      synchronize: true,
-    }),
+    TypeOrmModule.forFeature([Role]),
   ],
-  // controllers: [UsersController],
   providers: [RoleService],
+  exports: [RoleService],
 })
 export class RoleModule {}
