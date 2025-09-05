@@ -1,12 +1,12 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Repository } from 'typeorm';
-import { InjectRepository, getRepositoryToken } from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from './role.entity';
 
 @Injectable()
 export class RoleService {
   constructor(
-    @Inject(forwardRef(() => getRepositoryToken(Role)))
+    @InjectRepository(Role)
     private readonly roleRepository: Repository<Role>,
   ) {}
 
